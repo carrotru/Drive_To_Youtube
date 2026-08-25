@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whisper 自動字幕教學</title>
+<style>
+  :root{
+    --bg: #14171c;
+    --panel: #1b1f26;
+    --line: #2a2f38;
+    --text: #dfe3e8;
+    --dim: #8791a0;
+    --amber: #e0a458;
+    --amber-soft: rgba(224,164,88,0.12);
+    --green: #7ee2a8;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.7;
+    padding:0 0 80px;
+  }
+  header{
+    padding:56px 24px 40px;
+    border-bottom:1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(224,164,88,0.06), transparent 60%);
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:0 24px;}
+  header .wrap{padding:0;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0 0 14px;
+  }
+  h1{
+    font-size:clamp(26px,4vw,34px);
+    margin:0 0 12px;
+    font-weight:650;
+    letter-spacing:-0.01em;
+    color:#fff;
+  }
+  .sub{color:var(--dim); font-size:15px; margin:0; max-width:560px;}
+
+  main{max-width:720px; margin:0 auto; padding:0 24px;}
+
+  .step{
+    display:flex;
+    gap:20px;
+    padding:32px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .step:last-child{border-bottom:none;}
+  .num{
+    font-family:var(--mono);
+    font-size:14px;
+    color:var(--amber);
+    background:var(--amber-soft);
+    border:1px solid rgba(224,164,88,0.3);
+    width:34px; height:34px;
+    min-width:34px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+  }
+  .step-body h3{
+    margin:4px 0 10px;
+    font-size:18px;
+    color:#fff;
+    font-weight:600;
+  }
+  .step-body p{margin:0 0 10px; color:var(--text); font-size:15px;}
+  .step-body .note-inline{color:var(--dim); font-size:13.5px;}
+
+  .btn{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:13px;
+    background:#0f1216;
+    border:1px solid var(--line);
+    color:var(--green);
+    padding:2px 8px;
+    border-radius:5px;
+  }
+
+  code, .code-inline{
+    font-family:var(--mono);
+    background:#0f1216;
+    border:1px solid var(--line);
+    padding:1px 7px;
+    border-radius:5px;
+    font-size:13.5px;
+    color:#f0c987;
+  }
+
+  .code-block{
+    background:#0f1216;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    margin:12px 0;
+  }
+  .code-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+  }
+  .code-label{font-size:12px;color:var(--dim);font-family:var(--mono);}
+  .copy-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-size:12px;
+    padding:4px 11px;
+    border-radius:6px;
+    cursor:pointer;
+    font-family:var(--mono);
+    transition:background .15s, border-color .15s, color .15s;
+  }
+  .copy-btn:hover{border-color:var(--amber); color:var(--amber);}
+  .copy-btn.copied{
+    background:var(--amber);
+    border-color:var(--amber);
+    color:#14171c;
+    font-weight:600;
+  }
+  pre{
+    font-family:var(--mono);
+    font-size:13px;
+    padding:14px 16px;
+    overflow-x:auto;
+    color:#c7d0da;
+    line-height:1.6;
+    margin:0;
+    white-space:pre-wrap;
+    word-break:break-all;
+  }
+
+  .link-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 16px;
+    margin:12px 0;
+  }
+  .link-row a.url{
+    color:var(--text);
+    text-decoration:none;
+    font-size:14px;
+    font-family:var(--mono);
+    word-break:break-all;
+  }
+  .link-row a.url:hover{color:var(--amber);}
+  .go-btn{
+    flex-shrink:0;
+    background:var(--amber-soft);
+    color:var(--amber);
+    border:1px solid rgba(224,164,88,0.3);
+    padding:6px 13px;
+    border-radius:6px;
+    font-size:12px;
+    font-family:var(--mono);
+    font-weight:600;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .go-btn:hover{background:var(--amber);color:#14171c;}
+
+  .warn{
+    margin-top:12px;
+    background:rgba(224,164,88,0.08);
+    border:1px solid rgba(224,164,88,0.25);
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:13.5px;
+    color:#f0d6ac;
+  }
+  .warn b{color:var(--amber);}
+
+  .checklist{
+    margin:40px auto 0;
+    max-width:720px;
+    padding:22px 24px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--amber);
+    border-radius:8px;
+  }
+  .checklist h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--amber);
+    margin:0 0 14px;
+  }
+  .checklist ul{margin:0;padding:0;list-style:none;}
+  .checklist li{
+    display:flex;
+    gap:10px;
+    font-size:14.5px;
+    color:var(--text);
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{
+    content:"○";
+    color:var(--amber);
+    flex-shrink:0;
+  }
+
+  footer{
+    max-width:720px;
+    margin:40px auto 0;
+    padding:24px;
+    text-align:center;
+    color:var(--dim);
+    font-size:13px;
+    font-family:var(--mono);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">鴻儒筆記 ·SRT</p>
+    <h1>用 Whisper 自動生成 SRT 字幕</h1>
+    <p class="sub">不用裝任何軟體，全部在瀏覽器裡完成。把影片轉成 mp3 上傳，跑一段程式碼，幾分鐘後下載字幕檔。</p>
+  </div>
+</header>
+
+<main>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="step-body">
+      <h3>打開 Colab</h3>
+      <p>用 Google 帳號登入，新增一個筆記本。</p>
+      <div class="link-row">
+        <a class="url" href="https://colab.research.google.com" target="_blank" rel="noopener">colab.research.google.com</a>
+        <a class="go-btn" href="https://colab.research.google.com" target="_blank" rel="noopener">前往 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="step-body">
+      <h3>（建議）先切換成 GPU</h3>
+      <p><b>執行階段</b> → <b>變更執行階段類型</b> → 硬體加速器選 <code>T4 GPU</code> → 儲存。</p>
+      <p class="note-inline">45 分鐘音檔用 GPU 約 5–10 分鐘，用 CPU 可能要 40 分鐘以上。</p>
+      <div class="warn">
+        <b>注意：</b>切換後頁面會重新連線，要在切換<b>之後</b>才上傳檔案。
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="step-body">
+      <h3>上傳音訊檔</h3>
+      <p>建議先把影片轉成 <code>mp3</code> 再上傳，檔案小很多、速度快很多，字幕結果完全一樣（Whisper 只聽聲音）。</p>
+      <p>左側「檔案」圖示 → 上傳檔案圖示，選好檔案後<b style="color:#fff;">務必等左下角的轉圈圈完全停止</b>再進行下一步。</p>
+      <div class="warn"><b>最常出錯的原因：</b>沒等上傳完成就直接跑下一步。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="step-body">
+      <h3>貼上並執行程式碼</h3>
+      <p>把下面的「你的檔名.mp3」換成你實際上傳的檔名（要完全一致，含底線、空格），貼進 cell 後按左邊的播放鍵。</p>
+      <div class="code-block">
+        <div class="code-top">
+          <span class="code-label">python · colab cell</span>
+          <button class="copy-btn" onclick="copyCode('code1', this)">複製</button>
+        </div>
+        <pre id="code1">!pip install -U openai-whisper
+!whisper "你的檔名.mp3" --model medium --language Chinese --output_format srt</pre>
+      </div>
+      <div class="warn"><b>參數說明：</b> model 可選 tiny / base / small / medium / large，越大越準但越慢；medium 是中文的平衡點。檔名若含空格記得保留引號。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div class="step-body">
+      <h3>下載 SRT</h3>
+      <p>跑完後左側檔案列表會多一個 <code>.srt</code> 檔，右鍵點它選「下載」就能存到電腦上直接套用到剪輯軟體。</p>
+    </div>
+  </div>
+
+</main>
+
+<div class="checklist">
+  <h2>常見問題自查</h2>
+  <ul>
+    <li>出現「No such file or directory」→ 檔案還沒上傳完，或檔名打錯</li>
+    <li>字幕只跑出前面一小段 → 上傳沒等完成，刪掉重傳一次</li>
+    <li>跑很久還沒好 → 確認是不是還在用 CPU，沒切到 GPU</li>
+    <li>專有名詞、人名常認錯 → 屬正常現象，跑完後人工校對一輪</li>
+  </ul>
+</div>
+
+<script>
+function copyCode(id, btn){
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const original = btn.textContent;
+    btn.textContent = '已複製 ✓';
+    btn.classList.add('copied');
+    setTimeout(()=>{
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1800);
+  });
+}
+</script>
+</body>
+</html>
